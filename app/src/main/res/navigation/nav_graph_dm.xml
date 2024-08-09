@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_dm"
+    app:startDestination="@id/followingsFragment">
+
+    <fragment
+        android:id="@+id/followingsFragment"
+        android:name="com.aashushaikh.twitterclone.fragments.FollowingsFragment"
+        android:label="fragment_followings"
+        tools:layout="@layout/fragment_followings" >
+        <action
+            android:id="@+id/action_followingsFragment_to_chatsFragment"
+            app:destination="@id/chatsFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatsFragment"
+        android:name="com.aashushaikh.twitterclone.fragments.ChatsFragment"
+        android:label="fragment_chats"
+        tools:layout="@layout/fragment_chats" />
+</navigation>

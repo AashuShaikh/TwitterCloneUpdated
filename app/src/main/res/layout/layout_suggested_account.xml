@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    app:cardElevation="20dp"
+    app:cardCornerRadius="20dp"
+    android:layout_marginEnd="4dp"
+    android:backgroundTint="#69C6F1">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:padding="10dp">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/img_suggested_profile"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="2dp"
+            android:src="@drawable/ic_launcher_background"
+            app:civ_border_color="@color/black"
+            app:civ_border_width="3dp" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/tv_suggested_email"
+            style="?attr/textAppearanceHeadline6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/img_suggested_profile"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="2dp"
+            android:text="Account Email" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_follow"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_suggested_email"
+            android:layout_centerHorizontal="true"
+            android:text="Follow"
+            android:textColor="@color/black"
+            android:textSize="20sp"
+            app:strokeColor="@color/black"
+            app:strokeWidth="3dp" />
+
+    </RelativeLayout>
+</com.google.android.material.card.MaterialCardView>
