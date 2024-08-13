@@ -6,6 +6,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.aashushaikh.twitterclone.R
 import com.aashushaikh.twitterclone.data.Message
+import com.aashushaikh.twitterclone.utils.Utilities
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -43,6 +44,7 @@ class ChatAdapter(private val messages: List<Message>, private val currentUserId
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        Log.d("List", "bindinge: $messages")
         val message = messages[position]
         when (holder) {
             is SentMessageViewHolder -> holder.bind(message)
@@ -60,7 +62,7 @@ class ChatAdapter(private val messages: List<Message>, private val currentUserId
 
         fun bind(message: Message) {
             messageTextView.text = message.message
-            timestampTextView.text = message.timestamp.toString()
+            timestampTextView.text = Utilities.getFormattedTime(message.timestamp)
         }
     }
 
@@ -70,7 +72,7 @@ class ChatAdapter(private val messages: List<Message>, private val currentUserId
 
         fun bind(message: Message) {
             messageTextView.text = message.message
-            timestampTextView.text = message.timestamp.toString()
+            timestampTextView.text = Utilities.getFormattedTime(message.timestamp)
         }
     }
 }

@@ -23,6 +23,7 @@ import com.aashushaikh.twitterclone.data.Message
 import com.aashushaikh.twitterclone.databinding.FragmentChatsBinding
 import com.aashushaikh.twitterclone.id_calls.AppIds
 import com.google.android.gms.tasks.Task
+import com.google.android.gms.tasks.Tasks
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.database
@@ -31,6 +32,7 @@ import com.zegocloud.uikit.prebuilt.call.ZegoUIKitPrebuiltCallService
 import com.zegocloud.uikit.prebuilt.call.invite.ZegoUIKitPrebuiltCallInvitationConfig
 import com.zegocloud.uikit.prebuilt.call.invite.widget.ZegoSendCallInvitationButton
 import com.zegocloud.uikit.service.defines.ZegoUIKitUser
+import kotlinx.coroutines.tasks.await
 
 class ChatsFragment : Fragment() {
 
@@ -57,7 +59,11 @@ class ChatsFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        Toast.makeText(requireContext(), "User Email: $userEmail and User Profile link: $userProfile", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            requireContext(),
+            "User Email: $userEmail and User Profile link: $userProfile",
+            Toast.LENGTH_SHORT
+        ).show()
 
         val config = ZegoUIKitPrebuiltCallInvitationConfig()
         ZegoUIKitPrebuiltCallService.init(
@@ -105,6 +111,7 @@ class ChatsFragment : Fragment() {
                     it.actionView = voiceCallButton
                     true
                 }
+
                 R.id.video_call -> {
                     // Save profile changes.
                     Toast.makeText(requireContext(), "VideoCall", Toast.LENGTH_SHORT).show()
@@ -115,10 +122,12 @@ class ChatsFragment : Fragment() {
                     it.actionView = videoCallButton
                     true
                 }
+
                 R.id.profile -> {
                     Toast.makeText(requireContext(), "Profile", Toast.LENGTH_SHORT).show()
                     true
                 }
+
                 else -> false
             }
         }
@@ -169,40 +178,122 @@ class ChatsFragment : Fragment() {
         }
     }
 
-    private fun checkOrCreateChat(userId1: String, userId2: String, onChatIdReady: (String) -> Unit) {
+    private fun checkOrCreateChat(
+        userId1: String,
+        userId2: String,
+        onChatIdReady: (String) -> Unit
+    ) {
         val chatsRef = Firebase.database.reference.child("chats")
-        val user1ChatsRef = Firebase.database.reference.child("users").child(userId1).child("listOfChats")
+        val user1ChatsRef =
+            Firebase.database.reference.child("users").child(userId1).child("listOfChats")
 
         user1ChatsRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                var chatIdFound = false
-                var chatId: String? = null
-                val chatPromises = mutableListOf<Task<DataSnapshot>>()
+//                var chatIdFound = false
+//                var chatId: String? = null
+//                val chatPromises = mutableListOf<Task<DataSnapshot>>()
+//
+//                if (snapshot.children.count() == 0) {
+//                    Log.d("chats", "checkOrCreateChat: creating new chat because snapshot children is 0")
+//                    createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
+//                    return
+//                }
+//
+//                for (chatSnapshot in snapshot.children) {
+//                    val chatKey = chatSnapshot.key
+//                    Log.d("chats", "chatKey: $chatKey")
+//                    val chatPromise = chatsRef.child(chatKey!!).child("participants").get()
+//                    chatPromises.add(chatPromise)
+//                    Log.d("chats", "chatPromises list: $chatPromises")
+//
+//                    chatPromise.addOnSuccessListener { participantsSnapshot ->
+//                        val participants = participantsSnapshot.getValue(object : GenericTypeIndicator<Map<String, Boolean>>() {})
+//                        Log.d("chats", "participants: $participants")
+//                        if (participants != null && participants.containsKey(userId2)) {
+//                            chatId = chatKey
+//                            chatIdFound = true
+//                            Log.d("chats", "chatIdFound: $chatIdFound")
+//                            onChatIdReady(chatId!!)
+//                        }
+//
+//                        if (chatPromises.size == snapshot.children.count() && !chatIdFound) {
+//                            Log.d("TAGG", "checkOrCreateChat: creating new chat because chatPromises.size is 0")
+//                            createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
+//                        }
+//                    }.addOnFailureListener {
+//                        // Handle error
+//                    }
+//                }
+//                Tasks.whenAll(chatPromises).addOnCompleteListener {
+//                    if (chatIdFound && chatId != null) {
+//                        onChatIdReady(chatId!!)
+//                    } else {
+//                        Log.d("chats", "checkOrCreateChat: creating new chat because no existing chat was found")
+//                        createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
+//                    }
+//                }
+
+                var chatPromises = mutableListOf<Task<DataSnapshot>>()
+                var chatKey: String? = null
+
+                if (snapshot.children.count() == 0) {
+                    Log.d(
+                        "chats",
+                        "checkOrCreateChat: creating new chat because snapshot children is 0"
+                    )
+                    createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
+                    return
+                }
 
                 for (chatSnapshot in snapshot.children) {
-                    val chatKey = chatSnapshot.key
+                    chatKey = chatSnapshot.key
+                    Log.d("chats", "chatKey: $chatKey")
                     val chatPromise = chatsRef.child(chatKey!!).child("participants").get()
                     chatPromises.add(chatPromise)
+                }
 
-                    chatPromise.addOnSuccessListener { participantsSnapshot ->
-                        val participants = participantsSnapshot.getValue(object : GenericTypeIndicator<Map<String, Boolean>>() {})
-                        if (participants != null && participants.containsKey(userId2)) {
-                            chatId = chatKey
-                            chatIdFound = true
-                            onChatIdReady(chatId!!)
-                        }
+                Tasks.whenAll(chatPromises).addOnCompleteListener {
+                    Log.d("chats", "chatpromises: $chatPromises")
+                    var chatIdFound = false
+                    var chatId: String? = null
 
-                        if (chatPromises.size == snapshot.children.count() && !chatIdFound) {
-                            createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
+                    for (task in chatPromises) {
+                        if (task.isSuccessful) {
+                            val participantsSnapshot = task.result
+                            val participants = participantsSnapshot.getValue(object :
+                                GenericTypeIndicator<Map<String, Boolean>>() {})
+                            Log.d("chats", "participants: $participants")
+                            if (participants != null && participants.containsKey(userId2)) {
+                                chatId = participantsSnapshot.ref.parent?.key
+                                chatIdFound = true
+//                                onChatIdReady(chatId!!)
+                                break
+                            }
+//                            else if (chatPromises.size == snapshot.children.count() && !chatIdFound) {
+//                                Log.d(
+//                                    "chats",
+//                                    "checkOrCreateChat: creating new chat ${chatPromises.size == snapshot.children.count()}"
+//                                )
+//                                createNewChat(
+//                                    chatsRef,
+//                                    user1ChatsRef,
+//                                    userId1,
+//                                    userId2,
+//                                    onChatIdReady
+//                                )
+//                            }
                         }
-                    }.addOnFailureListener {
-                        // Handle error
+                    }
+
+                    if (chatIdFound && chatId != null) {
+                        Log.d("chats", "Existing chat found, chatId: $chatId")
+                        onChatIdReady(chatId)
+                    }else{
+                        Log.d("chats", "Creating new chat")
+                        createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
                     }
                 }
 
-                if (snapshot.children.count() == 0) {
-                    createNewChat(chatsRef, user1ChatsRef, userId1, userId2, onChatIdReady)
-                }
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -211,7 +302,13 @@ class ChatsFragment : Fragment() {
         })
     }
 
-    private fun createNewChat(chatsRef: DatabaseReference, user1ChatsRef: DatabaseReference, userId1: String, userId2: String, onChatIdReady: (String) -> Unit) {
+    private fun createNewChat(
+        chatsRef: DatabaseReference,
+        user1ChatsRef: DatabaseReference,
+        userId1: String,
+        userId2: String,
+        onChatIdReady: (String) -> Unit
+    ) {
         val chatId = chatsRef.push().key
         if (chatId != null) {
             val chatData = mapOf(
@@ -222,48 +319,57 @@ class ChatsFragment : Fragment() {
             chatRef.setValue(chatData)
 
             // Update users with the new chat ID
-            user1ChatsRef.child(chatId).setValue(mapOf("lastMessage" to "", "lastMessageTimestamp" to 0))
+            user1ChatsRef.child(chatId)
+                .setValue(mapOf("lastMessage" to "", "lastMessageTimestamp" to 0))
 
-            val user2ChatsRef = Firebase.database.reference.child("users").child(userId2).child("listOfChats")
-            user2ChatsRef.child(chatId).setValue(mapOf("lastMessage" to "", "lastMessageTimestamp" to 0))
+            val user2ChatsRef =
+                Firebase.database.reference.child("users").child(userId2).child("listOfChats")
+            user2ChatsRef.child(chatId)
+                .setValue(mapOf("lastMessage" to "", "lastMessageTimestamp" to 0))
 
             onChatIdReady(chatId)
         }
     }
 
 
-
     private fun sendMessage(chatId: String, senderId: String, receiverId: String, message: String) {
-        val messageId = Firebase.database.reference.child("chats").child(chatId).child("messages").push().key
+        val messageId =
+            Firebase.database.reference.child("chats").child(chatId).child("messages").push().key
         val messageData = mapOf(
             "sender" to senderId,
             "receiver" to receiverId,
             "message" to message,
             "timestamp" to System.currentTimeMillis()
         )
-        Log.d("TAGG", "messageData: "+messageData.toString())
+        Log.d("TAGG", "messageData: " + messageData.toString())
 
         if (messageId != null) {
-            val messageRef = Firebase.database.reference.child("chats").child(chatId).child("messages").child(messageId)
+            val messageRef =
+                Firebase.database.reference.child("chats").child(chatId).child("messages")
+                    .child(messageId)
             messageRef.setValue(messageData)
 
             // Update last message in both users' chat lists
-            val user1ChatsRef = Firebase.database.reference.child("users").child(senderId).child("listOfChats").child(chatId)
+            val user1ChatsRef =
+                Firebase.database.reference.child("users").child(senderId).child("listOfChats")
+                    .child(chatId)
             user1ChatsRef.child("lastMessage").setValue(message)
             user1ChatsRef.child("lastMessageTimestamp").setValue(System.currentTimeMillis())
 
-            val user2ChatsRef = Firebase.database.reference.child("users").child(receiverId).child("listOfChats").child(chatId)
+            val user2ChatsRef =
+                Firebase.database.reference.child("users").child(receiverId).child("listOfChats")
+                    .child(chatId)
             user2ChatsRef.child("lastMessage").setValue(message)
             user2ChatsRef.child("lastMessageTimestamp").setValue(System.currentTimeMillis())
         }
     }
 
-    private fun setupVoiceCall(){
+    private fun setupVoiceCall() {
         // Setup voice call
 
     }
 
-    private fun setupVideoCall(){
+    private fun setupVideoCall() {
         // Setup video call
     }
 }
